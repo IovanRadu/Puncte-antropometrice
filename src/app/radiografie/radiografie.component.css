@@ -1,0 +1,123 @@
+.div-radiografie-and-date{
+  display: flex;
+  justify-content: left;
+  width: 100%;
+}
+
+#radiografie{
+  width: 80%;
+  height: auto;
+  position: relative;
+}
+#radiografie-foto {
+  z-index: 10;
+  position: relative;
+  opacity: 0.75;
+}
+
+.div-date {
+  overflow-y : scroll;
+  max-height: 1380px;
+  width: 20%;
+  z-index: 10;
+  background-color: white;
+
+}
+.drow-point {
+  background-color: red;
+  position: absolute;
+  height: 8px;
+  z-index: 4 !important;
+  display: block;
+}
+.drow-line {
+  background-color: red;
+  position: absolute;
+  height: 2px;
+  z-index: 2 !important;
+  display: block;
+}
+
+.point {
+  background-color: brown;
+  position: absolute;
+  height: 8px;
+  z-index: 5 !important;
+  display: none;
+}
+
+.help-line {
+  background-color: #0d6efd;
+  position: absolute;
+  height: 2px;
+  z-index: 2 !important;
+  display: none;
+}
+
+.distance-line {
+  background-color: black;
+  position: absolute;
+  height: 2px;
+  z-index: 2 !important;
+  display: none;
+}
+
+.angle {
+  background-color: crimson;
+  position: absolute;
+  height: 2px;
+  z-index: 2 !important;
+  display: none;
+}
+
+#table-points {
+  padding-bottom: 5px;
+}
+#table-points > button {
+  width: 100%;
+}
+
+#table-help-lines {
+  padding-bottom: 5px;
+}
+#table-help-lines > button {
+  width: 100%;
+}
+
+#table-calc-distances {
+  padding-bottom: 5px;
+}
+#table-calc-distances > button {
+  width: 100%;
+}
+
+#table-angles {
+  padding-bottom: 5px;
+}
+#table-angles > button {
+  width: 100%;
+}
+
+.title-point {
+  background-color: wheat;
+  color: black;
+  position: absolute;
+  height: 17px;
+  z-index: 0 !important;
+}
+
+.text-short-name {
+  padding: 0 2px 5px 2px;
+  position: relative;
+  top: -4px;
+}
+
+.show {
+  display: block;
+}
+
+.hide {
+  display: none;
+}
+
+

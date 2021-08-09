@@ -1,0 +1,445 @@
+<span id="coord" [attr.nextClick]="nextClick"> Coordonate puncte : </span>
+<span id="coordA" [attr.x]="coordAx" [attr.y]="coordAy"
+  ><span *ngIf="coordAx >= 0 || coordAy >= 0">
+    A({{ coordAx }},{{ coordAy }})
+  </span></span
+>
+<span id="coordB" [attr.x]="coordBx" [attr.y]="coordBy"
+  ><span *ngIf="coordBx >= 0 || coordBy >= 0">
+    , B({{ coordBx }},{{ coordBy }})
+  </span></span
+>
+<span id="coordC" [attr.x]="coordCx" [attr.y]="coordCy"
+  ><span *ngIf="coordCx >= 0 || coordCy >= 0">
+    , C({{ coordCx }},{{ coordCy }})
+  </span></span
+>
+
+<span id="unghi" [attr.unghi]="calculatedAngle"
+  ><span *ngIf="calculatedAngle >= 0">
+    => Unghi calculat : {{ calculatedAngle }} &#176;</span
+  ></span
+>
+
+<div class="div-radiografie-and-date" >
+  <div id="radiografie" style="z-index: 1; position: relative">
+    <img
+      (click)="setPoint($event)"
+      [attr.src]="radiografieSrc"
+      alt="radiografie"
+      id="radiografie-foto"
+      class="radiografie"
+      [ngStyle]="{'z-index':modEditable ? '10' : '0' }"
+    />
+    <div id="point-A" [attr.title]="'A(' + coordAx + ',' + coordAy + ')'" class="drow-point"></div>
+    <div id="point-B" [attr.title]="'B(' + coordBx + ',' + coordBy + ')'" class="drow-point"></div>
+    <div id="point-C" [attr.title]="'C(' + coordCx + ',' + coordCy + ')'" class="drow-point"></div>
+    <div id="linie-ab" class="drow-line"></div>
+    <div id="linie-bc" class="drow-line"></div>
+    <div *ngFor="let calcDistance of calcDistances">
+      <div [id]="'calcDistance-' + calcDistance.calcDistanceId" class="distance-line"></div>
+    </div>
+    <div *ngFor="let helpLine of helpLines">
+      <div [id]="'helpLine-' + helpLine.helpLineId" class="help-line"></div>
+    </div>
+    <div *ngFor="let angle of angles">
+      <div [id]="'angleABC-' + angle.angleId" class="angle"></div>
+      <div [id]="'angleCBA-' + angle.angleId" class="angle"></div>
+    </div>
+    <div *ngFor="let point of points">
+      <div [id]="'point-' + point.pointId" [attr.title]="point.pointShortName +' (' +point.pointAx +',' +point.pointAy +')'" class="point"></div>
+      <div [id]="'title-point-' + point.pointId" [ngClass]="setTitlePointClass(point)" > <span class="text-short-name">{{ point.pointShortName }}</span></div>
+    </div>
+  </div>
+
+  <div class="div-date">
+    <button *ngIf="modEditable"
+            (click)="modEditable = !modEditable;"
+            class="btn-large green darken-1" style="width: 100%;"> Mod Editare </button>
+    <button *ngIf="!modEditable" (click)="modEditable = !modEditable" class="btn-large grey" style="width: 100%;"> Mod Vizualizare </button>
+
+    <div id="table-points" >
+      <button *ngIf="!showTablePoints" (click)="showTablePoints = !showTablePoints" class="btn-large blue darken-3">
+        Afişează tabelul Puctelor
+      </button>
+      <button *ngIf="showTablePoints" (click)="showTablePoints = !showTablePoints" class="btn-large grey darken-1">
+        Ascunde tabelul Puctelor
+      </button>
+       <table  class="table table-sm table-default table-hover"  *ngIf="showTablePoints">
+       <thead>
+       <tr>
+         <th colspan="3">
+           <input [(ngModel)]="searchPoint" type="text"
+                  class="form-control"
+                  style="border: 0"
+                  placeholder="filtrează ..."
+           />
+         </th>
+       </tr>
+       </thead>
+      <thead>
+      <tr>
+        <th>
+          <button
+            *ngIf="!showPoints"
+            (click)="showPointsMethod()"
+            class="btn white red-text waves-effect waves-green"
+          >
+            <i class="material-icons large">visibility_off</i>
+          </button>
+          <button
+            *ngIf="showPoints"
+            (click)="hidePointsMethod()"
+            class="btn white grey-text text-darken-1 waves-effect waves-red"
+          >
+            <i class="material-icons large">visibility</i>
+          </button>
+        </th>
+        <th>Denumire Puncte :</th>
+        <th>Alias</th>
+      </tr>
+      </thead>
+      <tbody *ngFor="let point of points" [attr.pointId]="categoryId[3]" [id]="point.pointId" [ngClass]="setTableBodyTrPointClass(point)">
+      <tr *ngIf="searchInText(point.pointName , searchPoint ) || searchInText(point.pointShortName , searchPoint ) ">
+        <td scope="col">
+          <button
+            *ngIf="nextClick === 'B'  && point.pointAx === 0 && point.pointAy === 0 "
+            (click)="
+                point.pointAx = coordAx;
+                point.pointAy = coordAy;
+                restartPointA();
+                refreshPoints();
+              "
+            class="btn green darken-2 waves-effect waves-light"
+          >
+            <i class="material-icons">save</i>
+          </button>
+          <button
+            *ngIf="((nextClick != 'B' && point.pointAx != 0 && point.pointAy != 0) || (nextClick === 'B' && point.pointAx != 0 && point.pointAy != 0)  )"
+            (click)="point.pointAx = 0; point.pointAy = 0; refreshPoints();"
+            class="btn red waves-effect waves-light"
+          >
+            <i class="material-icons">clear</i>
+          </button>
+        </td>
+        <td scope="col" [title]="point.pointName">
+          <input
+            [(ngModel)]="point.pointName"
+            type="text"
+            class="form-control"
+            style="border: 0"
+          />
+        </td>
+        <td scope="col" [attr.x]="point.pointAx" [attr.y]="point.pointAy">{{point.pointShortName}}</td>
+      </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div id="table-help-lines" >
+      <button *ngIf="!showTableHelpLines" (click)="showTableHelpLines = !showTableHelpLines" class="btn-large blue darken-3">
+        Afişează tabelul Liniilor Ajutătoare
+      </button>
+      <button *ngIf="showTableHelpLines" (click)="showTableHelpLines = !showTableHelpLines" class="btn-large grey darken-1">
+        Ascunde tabelul Liniilor Ajutătoare
+      </button>
+      <table class="table table-sm table-default table-hover" *ngIf="showTableHelpLines">
+      <thead>
+        <tr>
+          <th scope="col">
+            <button
+              *ngIf="!showHelpLines === true"
+              (click)="showHelpLinesMethod()"
+              class="btn white red-text waves-effect waves-green"
+            >
+              <i class="material-icons large">visibility_off</i>
+            </button>
+            <button
+              *ngIf="showHelpLines"
+              (click)="hideHelpLinesMethod()"
+              class="btn white grey-text text-darken-1 waves-effect waves-red"
+            >
+              <i class="material-icons large">visibility</i>
+            </button>
+          </th>
+          <th scope="col">Linii ajutătoare :</th>
+        </tr>
+      </thead>
+
+      <tbody  *ngFor="let helpLine of helpLines" [attr.categoryId]="categoryId[0]"  [id]="helpLine.helpLineId"
+              [ngClass]="setTableBodyTrHelpLineClass(helpLine)"
+              [attr.Ax]=helpLine.helpLineAx
+              [attr.Ay]=helpLine.helpLineAy
+              [attr.Bx]=helpLine.helpLineBx
+              [attr.By]=helpLine.helpLineBy>
+        <tr>
+          <td scope="col">
+            <button
+              *ngIf="nextClick === 'C' && helpLine.helpLineAx === 0 && helpLine.helpLineAy === 0 && helpLine.helpLineBx === 0 && helpLine.helpLineBy === 0"
+              (click)="
+                helpLine.helpLineAx = coordAx;
+                helpLine.helpLineAy = coordAy;
+                helpLine.helpLineBx = coordBx;
+                helpLine.helpLineBy = coordBy;
+                refreshHelpLines();
+                restartPointA();
+              "
+              class="btn green darken-2 waves-effect waves-light"
+            >
+              <i class="material-icons left">save</i> {{ helpLine.helpLineId }}
+            </button>
+            <button
+              *ngIf="((nextClick != 'C' && helpLine.helpLineAx != 0 && helpLine.helpLineAy != 0 && helpLine.helpLineBx != 0 && helpLine.helpLineBy != 0)
+              || (nextClick === 'C' && helpLine.helpLineAx != 0 && helpLine.helpLineAy != 0 && helpLine.helpLineBx != 0 && helpLine.helpLineBy != 0)) "
+              (click)="
+                helpLine.helpLineAx = 0;
+                helpLine.helpLineAy = 0;
+                helpLine.helpLineBx = 0;
+                helpLine.helpLineBy = 0;
+                refreshHelpLines()
+              "
+              class="btn red waves-effect waves-light"
+            >
+              <i class="material-icons left">clear</i> {{ helpLine.helpLineId }}
+            </button>
+
+          </td>
+          <td scope="col" [title]="helpLine.helpLineName">
+            <input
+              [(ngModel)]="helpLine.helpLineName"
+              type="text"
+              class="form-control"
+              style="border: 0"
+            />
+          </td>
+          <td>
+<!--              <button class="btn-floating btn-small blue-grey"
+                      *ngIf="((nextClick != 'C' && helpLine.helpLineAx != 0 && helpLine.helpLineAy != 0 && helpLine.helpLineBx != 0 && helpLine.helpLineBy != 0)
+                      || (nextClick === 'C' && helpLine.helpLineAx != 0 && helpLine.helpLineAy != 0 && helpLine.helpLineBx != 0 && helpLine.helpLineBy != 0)) "
+                      (click)="
+                        helpLine.helpLineAx = 0;
+                        helpLine.helpLineAy = 0;
+                        helpLine.helpLineBx = 0;
+                        helpLine.helpLineBy = 0;
+                        refreshHelpLines()
+              "
+
+              >
+                <i class="material-icons">mode_edit</i>
+              </button>-->
+          </td>
+        </tr>
+<!--        <tr *ngIf="((nextClick != 'C' && helpLine.helpLineAx != 0 && helpLine.helpLineAy != 0 && helpLine.helpLineBx != 0 && helpLine.helpLineBy != 0)
+                   || (nextClick === 'C' && helpLine.helpLineAx != 0 && helpLine.helpLineAy != 0 && helpLine.helpLineBx != 0 && helpLine.helpLineBy != 0)) ">
+          <td colspan="3">
+            <button class="btn green" style="width: 50%;"><i class="material-icons center">save</i> Punct A</button>
+            <button class="btn green" style="width: 50%;"><i class="material-icons center">save</i> Punct B</button>
+          </td>
+        </tr>-->
+      </tbody>
+    </table>
+    </div>
+   <!-- //////////////////////////////////// end helpLine -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+
+    <!--//////////////////////////////////// calcDistance /////////////////////////////////////////////-->
+    <div id="table-calc-distances" >
+      <button *ngIf="!showTableCalcDistances" (click)="showTableCalcDistances = !showTableCalcDistances" class="btn-large blue darken-3">
+        Afişează tabelul Calcul Distanţe
+      </button>
+      <button *ngIf="showTableCalcDistances" (click)="showTableCalcDistances = !showTableCalcDistances" class="btn-large grey darken-1">
+        Ascunde tabelul Calcul Distanţe
+      </button>
+      <table class="table table-sm table-default table-hover" *ngIf="showTableCalcDistances">
+        <thead>
+        <tr>
+          <th scope="col">
+            <button
+              *ngIf="!showCalcDistances"
+              (click)="showCalcDistances = !showCalcDistances;
+                       showCalcDistancesMethod();"
+              class="btn white red-text waves-effect waves-green"
+            >
+              <i class="material-icons large">visibility_off</i>
+            </button>
+            <button
+              *ngIf="showCalcDistances"
+              (click)="showCalcDistances = !showCalcDistances;
+                       hideCalcDistancesMethod();"
+              class="btn white grey-text text-darken-1 waves-effect waves-red"
+            >
+              <i class="material-icons large">visibility</i>
+            </button>
+          </th>
+          <th scope="col">Calcul Distanţe :</th>
+          <th>cm</th>
+<!--          <th> <a class="btn-floating btn-small white" style="visibility:hidden;"><i class="material-icons">mode_edit</i></a></th>-->
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let calcDistance of calcDistances" [attr.categoryId]="categoryId[1]"  [id]="calcDistance.calcDistanceId"
+            [ngClass]="setTableBodyTrCalcDistanceClass(calcDistance)"
+            [attr.Ax]=calcDistance.calcDistanceAx
+            [attr.Ay]=calcDistance.calcDistanceAy
+            [attr.Bx]=calcDistance.calcDistanceBx
+            [attr.By]=calcDistance.calcDistanceBy
+            [attr.px]=calcDistance.px
+            [attr.cm]=calcDistance.cm>
+          <td scope="col">
+            <button
+              *ngIf="nextClick === 'C' && calcDistance.calcDistanceAx === 0 && calcDistance.calcDistanceAy === 0 && calcDistance.calcDistanceBx === 0 && calcDistance.calcDistanceBy === 0"
+              (click)="
+                calcDistance.calcDistanceAx = coordAx;
+                calcDistance.calcDistanceAy = coordAy;
+                calcDistance.calcDistanceBx = coordBx;
+                calcDistance.calcDistanceBy = coordBy;
+                calcDistance.px = calculatePxDistance(coordAx, coordAy, coordBx, coordBy);
+                calcDistance.cm = transformPxToCmDistance(calcDistance.px);
+                restartPointA();
+                refreshCalcDistances();
+              "
+              class="btn green darken-2 waves-effect waves-light"
+            >
+              <i class="material-icons left">save</i> {{ calcDistance.calcDistanceId }}
+            </button>
+            <button
+              *ngIf="((nextClick != 'C' && calcDistance.calcDistanceAx != 0 && calcDistance.calcDistanceAy != 0 && calcDistance.calcDistanceBx != 0 && calcDistance.calcDistanceBy != 0)
+              || (nextClick === 'C' && calcDistance.calcDistanceAx != 0 && calcDistance.calcDistanceAy != 0 && calcDistance.calcDistanceBx != 0 && calcDistance.calcDistanceBy != 0)) "
+              (click)="
+                calcDistance.calcDistanceAx = 0;
+                calcDistance.calcDistanceAy = 0;
+                calcDistance.calcDistanceBx = 0;
+                calcDistance.calcDistanceBy = 0;
+                calcDistance.px = 0;
+                calcDistance.cm = 0;
+                refreshCalcDistances()
+              "
+              class="btn red waves-effect waves-light"
+            >
+              <i class="material-icons left">clear</i> {{ calcDistance.calcDistanceId }}
+            </button>
+
+          </td>
+          <td scope="col" [title]="calcDistance.calcDistanceName">
+            <input
+              [(ngModel)]="calcDistance.calcDistanceName"
+              type="text"
+              class="form-control"
+              style="border: 0"
+            />
+          </td>
+          <td> {{ this.round(calcDistance.cm) }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <!--//////////////////////////////////// end calcDistance -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+
+   <!-- //////////////////////////////////// angle /////////////////////////////////////////////-->
+    <div id="table-angles" >
+      <button *ngIf="!showTableAngles" (click)="showTableAngles = !showTableAngles" class="btn-large blue darken-3">
+        Afişează tabelul Unghiuri
+      </button>
+      <button *ngIf="showTableAngles" (click)="showTableAngles = !showTableAngles" class="btn-large grey darken-1">
+        Ascunde tabelul tabelul Unghiuri
+      </button>
+      <table class="table table-sm table-default table-hover" *ngIf="showTableAngles">
+        <thead>
+        <tr>
+          <th scope="col">
+            <button
+              *ngIf="!showAngles"
+              (click)="showAngles = !showAngles;
+                       showAnglesMethod();"
+              class="btn white red-text waves-effect waves-green"
+            >
+              <i class="material-icons large">visibility_off</i>
+            </button>
+            <button
+              *ngIf="showAngles"
+              (click)="showAngles = !showAngles;
+                       hideAnglesMethod();"
+              class="btn white grey-text text-darken-1 waves-effect waves-red"
+            >
+              <i class="material-icons large">visibility</i>
+            </button>
+          </th>
+          <th scope="col">Denumire unghi :</th>
+          <th>grade</th>
+<!--          <th> <a class="btn-floating btn-small white" style="visibility:hidden;"><i class="material-icons">mode_edit</i></a></th>-->
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let angle of angles" [attr.categoryId]="categoryId[2]"  [id]="angle.angleId"
+            [ngClass]="setTableBodyTrAngleClass(angle)"
+            [attr.Ax]=angle.angleAx
+            [attr.Ay]=angle.angleAy
+            [attr.Bx]=angle.angleBx
+            [attr.By]=angle.angleBy
+            [attr.Cx]=angle.angleCx
+            [attr.Cy]=angle.angleCy
+            [attr.degree]=angle.angleDegree
+        >
+          <td scope="col">
+            <button
+              *ngIf="nextClick === 'O'
+              && angle.angleAx === 0 && angle.angleAy === 0
+              && angle.angleBx === 0 && angle.angleBy === 0
+              && angle.angleBx === 0 && angle.angleBy === 0"
+              (click)="
+                angle.angleAx = coordAx;
+                angle.angleAy = coordAy;
+                angle.angleBx = coordBx;
+                angle.angleBy = coordBy;
+                angle.angleCx = coordCx;
+                angle.angleCy = coordCy;
+                angle.angleDegree = calculateAngle(angle.angleAx, angle.angleAy, angle.angleBx, angle.angleBy, angle.angleCx, angle.angleCy, angle.angleBx, angle.angleBy);
+                restartPointA();
+                refreshAngles();
+              "
+              class="btn green darken-2 waves-effect waves-light"
+            >
+              <i class="material-icons left">save</i>{{ angle.angleId }}
+            </button>
+            <button
+              *ngIf="(
+                (nextClick != 'O'
+                      && angle.angleAx != 0 && angle.angleAy != 0
+                      && angle.angleBx != 0 && angle.angleBy != 0
+                      && angle.angleCx != 0 && angle.angleCy != 0 )
+                ||
+                (nextClick === 'O'
+                       && angle.angleAx != 0 && angle.angleAy != 0
+                       && angle.angleBx != 0 && angle.angleBy != 0
+                       && angle.angleCx != 0 && angle.angleCy != 0)
+                       ) "
+              (click)="
+                angle.angleAx = 0;
+                angle.angleAy = 0;
+                angle.angleBx = 0;
+                angle.angleBy = 0;
+                angle.angleCx = 0;
+                angle.angleCy = 0;
+                angle.angleDegree = 0;
+                refreshAngles()
+              "
+              class="btn red waves-effect waves-light"
+            >
+              <i class="material-icons left">clear</i> {{ angle.angleId }}
+            </button>
+
+          </td>
+          <td scope="col" [title]="angle.angleName">
+            <input
+              [(ngModel)]="angle.angleName"
+              type="text"
+              class="form-control"
+              style="border: 0"
+            />
+          </td>
+          <td> {{ this.round(angle.angleDegree) }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+<!--    //////////////////////////////////// end angle -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+</div>
